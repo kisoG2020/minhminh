@@ -9,25 +9,25 @@ const MusicPlayer = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef(new Audio());
-
+  const base = import.meta.env.BASE_URL;
   const songs = [
     {
       id: 1,
       title: "Bầu trời mới",
-      artist: " Da LAB, Minh Tốc & Lam",
+      artist: "Da LAB, Minh Tốc & Lam",
       duration: "4:22",
-      cover: "/bautroimoi.jpg",
+      cover: `${base}bautroimoi.jpg`,
       description: "Bài hát về tình yêu hoàn hảo của chúng ta",
-      url: "/bautroimoi.mp3" // Thêm đường dẫn mp3 tại đây
+      url: `${base}bautroimoi.mp3`
     },
     {
       id: 2,
       title: "Lễ Đường",
       artist: "Kai Đinh",
       duration: "4:09",
-      cover: "/leduong.jpg",
+      cover: `${base}leduong.jpg`,
       description: "Tình yêu vô điều kiện dành cho em",
-      url: "/leduong.mp3"
+      url: `${base}leduong.mp3`
     }
   ];
 
