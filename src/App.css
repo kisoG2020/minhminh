@@ -1661,21 +1661,199 @@ body::before {
   }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
+@media (max-width: 480px) {
+  body {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .app {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100vw;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: auto;
+    min-width: unset;
+    z-index: 1001;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0.5rem 0;
+  }
+
+  .sidebar-header {
+    padding: 1rem 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    gap: 0.2rem;
+    padding: 0.5rem 0;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .nav-item {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    border-radius: 50px;
+    margin-right: 0;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .nav-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .sidebar-footer {
+    padding: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 0.7rem;
+    margin-top: 70px; /* Để tránh sidebar che */
+    min-height: calc(100vh - 70px);
+  }
+
+  .dashboard-title,
+  .album-title,
+  .game-title,
+  .letter-title,
+  .music-title {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .stats-grid,
+  .actions-grid,
+  .milestones,
+  .photo-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .stat-card,
+  .action-card,
+  .milestone,
+  .photo-item,
+  .letter-card,
+  .message-container {
+    padding: 1rem !important;
+    border-radius: 12px !important;
+  }
+
+  .album-cover {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+  }
+
+  .album-cover img {
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .song-cover {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .song-cover img {
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .now-playing {
+    flex-direction: column;
+    gap: 0.7rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .player-container {
+    padding: 0.7rem;
+    border-radius: 12px;
+    margin-bottom: 1.2rem;
+  }
+
+  .progress-bar {
+    height: 5px;
+  }
+
+  .lyrics-container {
+    padding: 0.7rem;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    max-height: 200px;
+  }
+
+  .photo-image {
+    height: 100px;
+  }
+
+  .modal-content {
+    max-width: 95vw;
+    border-radius: 12px;
+    padding: 0.5rem;
+  }
+
+  .modal-image {
+    height: 180px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .modal-info {
+    padding: 1rem;
+  }
+
+  .footer-message {
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    gap: 0.5rem;
+  }
+
+  .player-controls {
+    gap: 1rem;
+  }
+
+  .control-btn,
+  .play-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+    padding: 0.7rem;
+  }
+
+  .volume-control {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .volume-slider {
+    width: 100px;
+    height: 5px;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(255, 182, 193, 0.1);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #ec4899, #f472b6);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #be185d, #ec4899);
+/* Đảm bảo ảnh luôn tròn ở mọi kích thước */
+.album-cover img,
+.song-cover img,
+.photo-image img {
+  border-radius: 50% !important;
+  object-fit: cover;
 }
