@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+"use client"
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, RotateCcw, Heart, Sparkles } from 'lucide-react';
 import './BlockudokuGame.css';
@@ -32,6 +34,9 @@ const BlockudokuGame = () => {
   const [draggedBlock, setDraggedBlock] = useState(null);
   const [previewPosition, setPreviewPosition] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const gridRef = useRef(null);
+  const dragImageRef = useRef(null);
+  const lastTouchUpdateRef = useRef(0);
 
   // Generate balanced blocks
   const generateBlocks = useCallback(() => {
@@ -106,7 +111,7 @@ const BlockudokuGame = () => {
     const { clearedGrid, linesCleared } = clearCompletedLines(newGrid);
     setGrid(clearedGrid);
     
-    // Score: 10 points per block placed + 100 points per line cleared (only if both row and column are cleared)
+    // Score: 10 points per block placed + 100 points per line cleared
     const blockPoints = blockToPlace.shape.flat().filter(cell => cell === 1).length * 10;
     const linePoints = linesCleared * 100;
     setScore(prev => prev + blockPoints + linePoints);
@@ -162,53 +167,186 @@ const BlockudokuGame = () => {
     return { clearedGrid: newGrid, linesCleared };
   };
 
-  // Drag handlers
+  // Create drag image
+  const createDragImage = (block, isTouch = false, clientX = 0, clientY = 0) => {
+    try {
+      // Clean up any existing drag image
+      if (dragImageRef.current) {
+        document.body.removeChild(dragImageRef.current);
+        dragImageRef.current = null;
+      }
+
+      const dragImage = document.createElement('div');
+      dragImage.className = isTouch ? 'touch-drag-image' : 'drag-image';
+      dragImage.id = `drag-image-${block.id}`;
+
+      const blockGrid = document.createElement('div');
+      blockGrid.className = 'drag-block-grid';
+
+      block.shape.forEach(row => {
+        const rowElement = document.createElement('div');
+        rowElement.className = 'drag-block-row';
+        row.forEach(cell => {
+          const cellElement = document.createElement('div');
+          cellElement.className = `drag-block-cell ${cell === 1 ? 'drag-block-cell-filled' : 'drag-block-cell-empty'}`;
+          rowElement.appendChild(cellElement);
+        });
+        blockGrid.appendChild(rowElement);
+      });
+
+      dragImage.appendChild(blockGrid);
+      document.body.appendChild(dragImage);
+      dragImageRef.current = dragImage;
+
+      if (isTouch) {
+        dragImage.style.left = `${clientX - 30}px`;
+        dragImage.style.top = `${clientY - 30}px`;
+      }
+    } catch (error) {
+      console.error('Error creating drag image:', error);
+    }
+  };
+
+  // Clean up drag image
+  const cleanupDragImage = () => {
+    try {
+      if (dragImageRef.current) {
+        document.body.removeChild(dragImageRef.current);
+        dragImageRef.current = null;
+      }
+    } catch (error) {
+      console.error('Error cleaning up drag image:', error);
+    }
+  };
+
+  // Get grid cell position from coordinates
+  const getGridCellPosition = (clientX, clientY) => {
+    try {
+      if (!gridRef.current) return null;
+      const gridRect = gridRef.current.getBoundingClientRect();
+      const cellWidth = gridRect.width / 9;
+      const cellHeight = gridRect.height / 9;
+
+      const col = Math.floor((clientX - gridRect.left) / cellWidth);
+      const row = Math.floor((clientY - gridRect.top) / cellHeight);
+
+      if (row >= 0 && row < 9 && col >= 0 && col < 9) {
+        return { row, col };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting grid cell position:', error);
+      return null;
+    }
+  };
+
+  // Touch handlers
+  const handleTouchStart = (e, block) => {
+    if (block.used) return;
+    
+    try {
+      e.preventDefault();
+      setDraggedBlock(block);
+      setIsDragging(true);
+
+      const touch = e.touches[0];
+      createDragImage(block, true, touch.clientX, touch.clientY);
+    } catch (error) {
+      console.error('Error in handleTouchStart:', error);
+      setDraggedBlock(null);
+      setIsDragging(false);
+      cleanupDragImage();
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    e.preventDefault();
+    if (!draggedBlock || !dragImageRef.current) return;
+
+    try {
+      const touch = e.touches[0];
+      const now = performance.now();
+      if (now - lastTouchUpdateRef.current < 16) return; // Throttle to ~60fps
+      lastTouchUpdateRef.current = now;
+
+      // Update drag image position
+      dragImageRef.current.style.left = `${touch.clientX - 30}px`;
+      dragImageRef.current.style.top = `${touch.clientY - 30}px`;
+
+      // Update preview position
+      const cellPosition = getGridCellPosition(touch.clientX, touch.clientY);
+      if (cellPosition && canPlaceBlock(grid, draggedBlock.shape, cellPosition.row, cellPosition.col)) {
+        setPreviewPosition(cellPosition);
+      } else {
+        setPreviewPosition(null);
+      }
+    } catch (error) {
+      console.error('Error in handleTouchMove:', error);
+      setPreviewPosition(null);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    e.preventDefault();
+    if (!draggedBlock) return;
+
+    try {
+      const touch = e.changedTouches[0];
+      const cellPosition = getGridCellPosition(touch.clientX, touch.clientY);
+      if (cellPosition) {
+        placeBlock(cellPosition.row, cellPosition.col);
+      }
+
+      cleanupDragImage();
+      setDraggedBlock(null);
+      setPreviewPosition(null);
+      setIsDragging(false);
+    } catch (error) {
+      console.error('Error in handleTouchEnd:', error);
+      cleanupDragImage();
+      setDraggedBlock(null);
+      setPreviewPosition(null);
+      setIsDragging(false);
+    }
+  };
+
+  // Drag handlers (for desktop)
   const handleDragStart = (e, block) => {
     if (block.used) return;
     
-    setDraggedBlock(block);
-    setIsDragging(true);
-    
-    // Create custom drag image
-    const dragImage = document.createElement('div');
-    dragImage.className = 'drag-image';
-    
-    // Create grid for block shape
-    const blockGrid = document.createElement('div');
-    blockGrid.className = 'drag-block-grid';
-    
-    block.shape.forEach(row => {
-      const rowElement = document.createElement('div');
-      rowElement.className = 'drag-block-row';
-      row.forEach(cell => {
-        const cellElement = document.createElement('div');
-        cellElement.className = `drag-block-cell ${cell === 1 ? 'drag-block-cell-filled' : 'drag-block-cell-empty'}`;
-        rowElement.appendChild(cellElement);
-      });
-      blockGrid.appendChild(rowElement);
-    });
-    
-    dragImage.appendChild(blockGrid);
-    document.body.appendChild(dragImage);
-    
-    // Set drag image with offset to align with cursor
-    e.dataTransfer.setDragImage(dragImage, 30, 30);
-    e.dataTransfer.effectAllowed = 'move';
-    
-    // Clean up after drag starts
-    setTimeout(() => document.body.removeChild(dragImage), 0);
+    try {
+      setDraggedBlock(block);
+      setIsDragging(true);
+      
+      createDragImage(block);
+      e.dataTransfer.setDragImage(dragImageRef.current, 30, 30);
+      e.dataTransfer.effectAllowed = 'move';
+      
+      // Clean up after drag starts
+      setTimeout(cleanupDragImage, 0);
+    } catch (error) {
+      console.error('Error in handleDragStart:', error);
+      setDraggedBlock(null);
+      setIsDragging(false);
+      cleanupDragImage();
+    }
   };
 
   const handleDragOver = (e, row, col) => {
     e.preventDefault();
     if (!draggedBlock) return;
     
-    if (canPlaceBlock(grid, draggedBlock.shape, row, col)) {
-      setPreviewPosition({ row, col });
-      e.dataTransfer.dropEffect = 'move';
-    } else {
+    try {
+      if (canPlaceBlock(grid, draggedBlock.shape, row, col)) {
+        setPreviewPosition({ row, col });
+        e.dataTransfer.dropEffect = 'move';
+      } else {
+        setPreviewPosition(null);
+        e.dataTransfer.dropEffect = 'none';
+      }
+    } catch (error) {
+      console.error('Error in handleDragOver:', error);
       setPreviewPosition(null);
-      e.dataTransfer.dropEffect = 'none';
     }
   };
 
@@ -216,8 +354,15 @@ const BlockudokuGame = () => {
     e.preventDefault();
     if (!draggedBlock) return;
     
-    const success = placeBlock(row, col, draggedBlock);
-    if (!success) {
+    try {
+      const success = placeBlock(row, col, draggedBlock);
+      if (!success) {
+        setDraggedBlock(null);
+        setPreviewPosition(null);
+        setIsDragging(false);
+      }
+    } catch (error) {
+      console.error('Error in handleDrop:', error);
       setDraggedBlock(null);
       setPreviewPosition(null);
       setIsDragging(false);
@@ -225,9 +370,14 @@ const BlockudokuGame = () => {
   };
 
   const handleDragEnd = () => {
-    setDraggedBlock(null);
-    setPreviewPosition(null);
-    setIsDragging(false);
+    try {
+      cleanupDragImage();
+      setDraggedBlock(null);
+      setPreviewPosition(null);
+      setIsDragging(false);
+    } catch (error) {
+      console.error('Error in handleDragEnd:', error);
+    }
   };
 
   // Check if any block can be placed
@@ -323,6 +473,7 @@ const BlockudokuGame = () => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
+            ref={gridRef}
           >
             <div className="grid">
               {grid.map((row, rowIndex) =>
@@ -375,6 +526,9 @@ const BlockudokuGame = () => {
                   draggable={!block.used}
                   onDragStart={(e) => handleDragStart(e, block)}
                   onDragEnd={handleDragEnd}
+                  onTouchStart={(e) => handleTouchStart(e, block)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
                   whileHover={!block.used ? { scale: 1.05 } : {}}
                   whileTap={!block.used ? { scale: 0.95 } : {}}
                 >
