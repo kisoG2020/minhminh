@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Calendar, Clock, Sparkles, Star, Gift, Coffee } from 'lucide-react';
+import './LoveCounter.css';
 
 const LoveCounter = () => {
   const [time, setTime] = useState({
@@ -141,6 +142,41 @@ const LoveCounter = () => {
             Thời gian trôi qua nhưng tình yêu của anh dành cho em sẽ mãi mãi không đổi thay."
           </p>
         </motion.div>
+      </div>
+
+      <div className="memorable-moments-section">
+        <motion.h2 
+          className="section-title"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          Những khoảnh khắc đáng nhớ 💫
+        </motion.h2>
+        <div className="memorable-moments">
+          {memorableMoments.map((moment, index) => {
+            const IconComponent = moment.icon;
+            return (
+              <motion.div 
+                key={index}
+                className="memorable-moment"
+                whileHover={{ scale: 1.05, y: -5 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+              >
+                <div className="moment-icon">
+                  <IconComponent className="moment-icon-svg" />
+                </div>
+                <div className="moment-content">
+                  <h3 className="moment-title">{moment.title}</h3>
+                  <p className="moment-description">{moment.description}</p>
+                  <span className="moment-date">{moment.date}</span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );

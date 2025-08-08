@@ -8,7 +8,16 @@ import {
   MessageSquare, 
   Music,
   Home,
-  Sparkles
+  Sparkles,
+  Menu,
+  X,
+  Clock,
+  HeartPulse,
+  Camera,
+  Gamepad,
+  Mail,
+  Headphones,
+  AlignJustify
 } from 'lucide-react';
 import './App.css';
 
@@ -16,21 +25,22 @@ import './App.css';
 import Dashboard from './components/Dashboard';
 import LoveCounter from './components/LoveCounter';
 import PhotoAlbum from './components/PhotoAlbum';
-import LoveGame from './components/LoveGame';
+import BlockudokuGame from './components/BlockudokuGame';
 import LoveLetter from './components/LoveLetter';
 import MusicPlayer from './components/MusicPlayer';
 import BubbleEffect from './components/BubbleEffect';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   const menuItems = [
-    { id: 'dashboard', icon: Home, label: 'Dashboard' },
-    { id: 'counter', icon: Calendar, label: 'Đếm ngày yêu' },
-    // { id: 'album', icon: Image, label: 'Album ảnh' },
-    { id: 'game', icon: Gamepad2, label: 'Trò chơi' },
-    { id: 'letter', icon: MessageSquare, label: 'Thư tình' },
-    { id: 'music', icon: Music, label: 'Âm nhạc' }
+    { id: 'dashboard', icon: Home, label: 'Trang chủ', emoji: '🏠' },
+    { id: 'counter', icon: Clock, label: 'Đếm ngày yêu', emoji: '💕' },
+    // { id: 'album', icon: Camera, label: 'Album ảnh', emoji: '📸' },
+    { id: 'game', icon: Gamepad, label: 'Trò chơi', emoji: '🎮' },
+    { id: 'letter', icon: Mail, label: 'Thư tình', emoji: '💌' },
+    { id: 'music', icon: Headphones, label: 'Âm nhạc', emoji: '🎵' }
   ];
 
   const handleNavigate = (page) => {
@@ -57,7 +67,7 @@ function App() {
       // case 'album':
       //   return <PhotoAlbum />;
       case 'game':
-        return <LoveGame />;
+        return <BlockudokuGame />;
       case 'letter':
         return <LoveLetter />;
       case 'music':
@@ -72,20 +82,31 @@ function App() {
       {/* Hiệu ứng bong bóng */}
       <BubbleEffect />
       
-      {/* Sidebar Navigation */}
+      {/* Header - Luôn hiển thị */}
       <motion.div 
-        className="sidebar"
-        initial={{ x: -250 }}
-        animate={{ x: 0 }}
+        className="app-header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="sidebar-header">
+        <div className="header-content">
           <div className="logo">
-            <Heart className="heart-icon" />
+            <HeartPulse className="heart-icon" />
             <span>Khánh & Minh</span>
           </div>
+          
+          {/* Toggle Button */}
+          <button
+            className="sidebar-toggle"
+            onClick={() => setSidebarVisible(!sidebarVisible)}
+          >
+            {sidebarVisible ? <X size={24} /> : <AlignJustify size={24} />}
+          </button>
         </div>
-        
+      </motion.div>
+      
+      {/* Sidebar Navigation */}
+      <div className={`sidebar ${sidebarVisible ? 'visible' : 'hidden'}`}>
         <nav className="sidebar-nav">
           {menuItems.map((item) => {
             const IconComponent = item.icon;
@@ -94,11 +115,14 @@ function App() {
                 key={item.id}
                 className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(item.id)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
               >
-                <IconComponent className="nav-icon" />
-                <span>{item.label}</span>
+                <div className="nav-item-content">
+                  <div className="nav-icon-container">
+                    <IconComponent className="nav-icon" />
+                    <span className="nav-emoji">{item.emoji}</span>
+                  </div>
+                  <span className="nav-label">{item.label}</span>
+                </div>
                 {activeTab === item.id && (
                   <motion.div
                     className="active-indicator"
@@ -118,13 +142,11 @@ function App() {
             <span>Forever Love</span>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Main Content */}
       <motion.main 
-        className="main-content"
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
+        className={`main-content ${sidebarVisible ? 'sidebar-visible' : 'sidebar-hidden'}`}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         {renderContent()}

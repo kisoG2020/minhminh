@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Play, Pause, SkipBack, SkipForward, Heart, Volume2 } from 'lucide-react';
+import './MusicPlayer.css';
 
 const MusicPlayer = () => {
   const [currentSong, setCurrentSong] = useState(0);
@@ -28,7 +29,17 @@ const MusicPlayer = () => {
       cover: `${base}leduong.jpg`,
       description: "Tình yêu vô điều kiện dành cho em",
       url: `${base}leduong.mp3`
+    },
+    {
+      id: 3,
+      title: "Một Đời",
+      artist: "14 Casper, Bon Nghiêm, buitruonglinh",
+      duration: "5:28",
+      cover: `${base}motdoi.jpg`,
+      description: "Một đời yêu em, một đời bên em",
+      url: `${base}motdoi.mp3`
     }
+
   ];
 
   useEffect(() => {
@@ -68,21 +79,21 @@ const MusicPlayer = () => {
   };
 
   const nextSong = () => {
+    const audio = audioRef.current;
+    audio.pause();
+    audio.currentTime = 0;
     const nextIndex = (currentSong + 1) % songs.length;
     setCurrentSong(nextIndex);
-    if (isPlaying) {
-      audioRef.current.src = songs[nextIndex].url;
-      audioRef.current.play();
-    }
+    setIsPlaying(false);
   };
 
   const prevSong = () => {
+    const audio = audioRef.current;
+    audio.pause();
+    audio.currentTime = 0;
     const prevIndex = (currentSong - 1 + songs.length) % songs.length;
     setCurrentSong(prevIndex);
-    if (isPlaying) {
-      audioRef.current.src = songs[prevIndex].url;
-      audioRef.current.play();
-    }
+    setIsPlaying(false);
   };
 
   const handleProgressClick = (e) => {
@@ -248,16 +259,16 @@ const MusicPlayer = () => {
               key={song.id}
               className={`song-item ${currentSong === index ? 'active' : ''}`}
               onClick={() => {
+                const audio = audioRef.current;
+                audio.pause();
+                audio.currentTime = 0;
                 setCurrentSong(index);
-                if (isPlaying) {
-                  audioRef.current.src = song.url;
-                  audioRef.current.play();
-                }
+                setIsPlaying(false);
               }}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -15 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              whileHover={{ scale: 1.02, x: 15 }}
+              whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.98 }}
             >
               <div className="song-cover">

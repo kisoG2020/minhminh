@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare, Heart, Sparkles, Send } from 'lucide-react';
+import './LoveLetter.css';
 
 const LoveLetter = () => {
   const [currentLetter, setCurrentLetter] = useState(0);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Image, Heart, Calendar, MapPin, X } from 'lucide-react';
+import './PhotoAlbum.css';
 
 const PhotoAlbum = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);

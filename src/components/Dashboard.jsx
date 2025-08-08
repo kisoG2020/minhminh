@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Calendar, Image, MessageSquare, Music, Star, Sparkles, Clock, Gift, Coffee, Moon, Sun, MapPin } from 'lucide-react';
+import './Dashboard.css';
 
 const Dashboard = ({ onNavigate }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
