@@ -34,6 +34,7 @@ const BlockudokuGame = () => {
   const [draggedBlock, setDraggedBlock] = useState(null);
   const [previewPosition, setPreviewPosition] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [clearingCells, setClearingCells] = useState([]);
   const gridRef = useRef(null);
   const dragImageRef = useRef(null);
   const lastTouchUpdateRef = useRef(0);
@@ -62,6 +63,7 @@ const BlockudokuGame = () => {
     setDraggedBlock(null);
     setPreviewPosition(null);
     setIsDragging(false);
+    setClearingCells([]);
   };
 
   // Check if block can be placed at position
@@ -107,9 +109,17 @@ const BlockudokuGame = () => {
     setPreviewPosition(null);
     setIsDragging(false);
 
-    // Check for completed lines and clear them
-    const { clearedGrid, linesCleared } = clearCompletedLines(newGrid);
-    setGrid(clearedGrid);
+    // Check for completed lines and animate clearing
+    const { clearedGrid, linesCleared, cellsToClear } = clearCompletedLines(newGrid);
+    if (cellsToClear.length > 0) {
+      setClearingCells(cellsToClear);
+      setTimeout(() => {
+        setGrid(clearedGrid);
+        setClearingCells([]);
+      }, 300); // Match animation duration
+    } else {
+      setGrid(clearedGrid);
+    }
     
     // Score: 10 points per block placed + 100 points per line cleared
     const blockPoints = blockToPlace.shape.flat().filter(cell => cell === 1).length * 10;
@@ -124,39 +134,31 @@ const BlockudokuGame = () => {
     return true;
   };
 
-  // Clear completed lines (rows AND columns simultaneously)
+  // Clear completed lines (rows OR columns)
   const clearCompletedLines = (grid) => {
     let newGrid = grid.map(row => [...row]);
     let linesCleared = 0;
+    const cellsToClear = [];
 
-    // Check for completed rows and columns
-    const completedRows = [];
-    const completedColumns = [];
-
-    // Find completed rows
+    // Check for completed rows
     for (let row = 0; row < 9; row++) {
       if (newGrid[row].every(cell => cell === 1)) {
-        completedRows.push(row);
-      }
-    }
-
-    // Find completed columns
-    for (let col = 0; col < 9; col++) {
-      if (newGrid.every(row => row[col] === 1)) {
-        completedColumns.push(col);
-      }
-    }
-
-    // Only clear if both a row AND a column are completed
-    if (completedRows.length > 0 && completedColumns.length > 0) {
-      // Clear completed rows
-      for (const row of completedRows) {
+        for (let col = 0; col < 9; col++) {
+          cellsToClear.push({ row, col });
+        }
         newGrid[row] = Array(9).fill(0);
         linesCleared++;
       }
+    }
 
-      // Clear completed columns
-      for (const col of completedColumns) {
+    // Check for completed columns
+    for (let col = 0; col < 9; col++) {
+      if (newGrid.every(row => row[col] === 1)) {
+        for (let row = 0; row < 9; row++) {
+          if (!cellsToClear.some(cell => cell.row === row && cell.col === col)) {
+            cellsToClear.push({ row, col });
+          }
+        }
         for (let row = 0; row < 9; row++) {
           newGrid[row][col] = 0;
         }
@@ -164,7 +166,7 @@ const BlockudokuGame = () => {
       }
     }
 
-    return { clearedGrid: newGrid, linesCleared };
+    return { clearedGrid: newGrid, linesCleared, cellsToClear };
   };
 
   // Create drag image
@@ -177,7 +179,7 @@ const BlockudokuGame = () => {
       }
 
       const dragImage = document.createElement('div');
-      dragImage.className = isTouch ? 'touch-drag-image' : 'drag-image';
+      dragImage.className = isTouch ? 'drag-image touch-drag' : 'drag-image';
       dragImage.id = `drag-image-${block.id}`;
 
       const blockGrid = document.createElement('div');
@@ -429,6 +431,11 @@ const BlockudokuGame = () => {
     return false;
   };
 
+  // Check if cell is being cleared
+  const isCellClearing = (row, col) => {
+    return clearingCells.some(cell => cell.row === row && cell.col === col);
+  };
+
   return (
     <motion.div 
       className="game-container"
@@ -449,7 +456,7 @@ const BlockudokuGame = () => {
             Love Blockudoku
             <Heart className="icon-heart" />
           </h1>
-          <p className="header-subtitle">Kéo thả khối để hoàn thành hàng 💕</p>
+          <p className="header-subtitle">Kéo thả khối để hoàn thành hàng hoặc cột 💕</p>
         </motion.div>
 
         {/* Score */}
@@ -478,23 +485,52 @@ const BlockudokuGame = () => {
             <div className="grid">
               {grid.map((row, rowIndex) =>
                 row.map((cell, colIndex) => (
-                  <motion.div
-                    key={`${rowIndex}-${colIndex}`}
-                    className={`grid-cell ${
-                      cell === 1 || shouldShowPreview(rowIndex, colIndex)
-                        ? 'cell-filled'
-                        : 'cell-empty'
-                    } ${
-                      shouldShowPreview(rowIndex, colIndex) ? 'cell-preview' : ''
-                    } ${
-                      (rowIndex + 1) % 3 === 0 && rowIndex !== 8 ? 'cell-border-bottom' : ''
-                    } ${
-                      (colIndex + 1) % 3 === 0 && colIndex !== 8 ? 'cell-border-right' : ''
-                    }`}
-                    onDragOver={(e) => handleDragOver(e, rowIndex, colIndex)}
-                    onDrop={(e) => handleDrop(e, rowIndex, colIndex)}
-                    whileHover={{ scale: 1.05 }}
-                  />
+                  <AnimatePresence key={`${rowIndex}-${colIndex}`}>
+                    {(!isCellClearing(rowIndex, colIndex) && (cell === 1 || shouldShowPreview(rowIndex, colIndex))) ? (
+                      <motion.div
+                        className={`grid-cell ${
+                          cell === 1 || shouldShowPreview(rowIndex, colIndex)
+                            ? 'cell-filled'
+                            : 'cell-empty'
+                        } ${
+                          shouldShowPreview(rowIndex, colIndex) ? 'cell-preview' : ''
+                        } ${
+                          (rowIndex + 1) % 3 === 0 && rowIndex !== 8 ? 'cell-border-bottom' : ''
+                        } ${
+                          (colIndex + 1) % 3 === 0 && colIndex !== 8 ? 'cell-border-right' : ''
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, rowIndex, colIndex)}
+                        onDrop={(e) => handleDrop(e, rowIndex, colIndex)}
+                        whileHover={{ scale: 1.05 }}
+                        initial={{ opacity: 1, scale: 1 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    ) : isCellClearing(rowIndex, colIndex) ? (
+                      <motion.div
+                        className="grid-cell cell-filled cell-clearing"
+                        initial={{ opacity: 1, scale: 1 }}
+                        animate={{ opacity: 0, scale: 0.5 }}
+                        exit={{ opacity: 0, scale: 0.5 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    ) : (
+                      <motion.div
+                        className={`grid-cell cell-empty ${
+                          (rowIndex + 1) % 3 === 0 && rowIndex !== 8 ? 'cell-border-bottom' : ''
+                        } ${
+                          (colIndex + 1) % 3 === 0 && colIndex !== 8 ? 'cell-border-right' : ''
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, rowIndex, colIndex)}
+                        onDrop={(e) => handleDrop(e, rowIndex, colIndex)}
+                        whileHover={{ scale: 1.05 }}
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </AnimatePresence>
                 ))
               )}
             </div>
@@ -585,7 +621,7 @@ const BlockudokuGame = () => {
                 <Heart className="modal-icon" />
                 <h2 className="modal-title">Love Blockudoku!</h2>
                 <p className="modal-text">
-                  Kéo thả khối để hoàn thành hàng và cột cùng lúc để xóa chúng! 💕
+                  Kéo thả khối để hoàn thành hàng hoặc cột để xóa chúng! 💕
                 </p>
                 <motion.button
                   className="modal-button"
@@ -643,7 +679,7 @@ const BlockudokuGame = () => {
               <h3 className="instructions-title">Luật chơi Blockudoku:</h3>
               <ul className="instructions-list">
                 <li>• 💖 <strong>Kéo thả:</strong> Kéo khối từ dưới lên lưới</li>
-                <li>• 💕 <strong>Xóa đường:</strong> Hoàn thành cả hàng VÀ cột cùng lúc</li>
+                <li>• 💕 <strong>Xóa đường:</strong> Hoàn thành hàng HOẶC cột để xóa</li>
                 <li>• 💗 <strong>Điểm số:</strong> 10 điểm/khối + 100 điểm/đường xóa</li>
                 <li>• 💘 <strong>Game over:</strong> Khi không thể đặt thêm khối nào</li>
                 <li>• 💝 <strong>Mục tiêu:</strong> Ghi điểm cao nhất có thể!</li>

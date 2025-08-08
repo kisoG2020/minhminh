@@ -12,6 +12,7 @@
   --modal-bg: rgba(0, 0, 0, 0.5);
   --modal-gradient: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(239, 68, 68, 0.2));
   --gradient-pink-red: linear-gradient(135deg, var(--primary-pink), var(--primary-red));
+  --gradient-clearing: linear-gradient(135deg, #ff6b6b, #ff85a1); /* Brighter for clearing */
   --transition: all 200ms ease;
   --font-family: 'Inter', -apple-system, sans-serif;
 }
@@ -204,7 +205,7 @@
 .grid-cell {
   width: 1.5rem;
   height: 1.5rem;
-  border: 1px solid var(--border-white);
+  border: 1px solid pink;
   border-radius: 0.25rem;
   cursor: pointer;
   transition: var(--transition);
@@ -225,6 +226,12 @@
 .grid-cell.cell-preview {
   opacity: 0.7; /* Slightly transparent to distinguish preview */
   animation: pulse 1s ease-in-out infinite; /* Subtle pulse effect */
+}
+
+.grid-cell.cell-clearing {
+  background: var(--gradient-clearing);
+  box-shadow: 0 0 0.75rem var(--shadow-pink);
+  animation: none; /* Override pulse for clearing */
 }
 
 .grid-cell.cell-empty {
@@ -403,21 +410,8 @@
   }
 }
 
-/* Drag Image (Desktop) */
+/* Drag Image (Desktop and Mobile) */
 .drag-image {
-  position: absolute;
-  top: -1000px; /* Hide off-screen */
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(5px);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  opacity: 0.9;
-  box-shadow: 0 4px 12px var(--shadow-pink);
-  animation: lift 0.3s ease-out forwards;
-}
-
-/* Touch Drag Image (Mobile) */
-.touch-drag-image {
   position: fixed;
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(5px);
@@ -425,9 +419,14 @@
   padding: 0.5rem;
   opacity: 0.9;
   box-shadow: 0 4px 12px var(--shadow-pink);
-  z-index: 100;
+  z-index: 1000; /* High z-index to stay above all elements */
   pointer-events: none; /* Prevent interaction with drag image */
+  will-change: transform; /* Optimize animations */
   animation: lift 0.3s ease-out forwards;
+}
+
+.drag-image.touch-drag {
+  /* Add touch-specific styles if needed */
 }
 
 @keyframes lift {
